@@ -1,0 +1,190 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 col-xl-8 mx-auto">
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0 fs-4 fs-md-3 fs-lg-2">
+                    <i class="fas fa-calculator me-2"></i>
+                    Hospital CSSD Requirements Calculator
+                </h2>
+            </div>
+            <div class="card-body">
+                <p class="lead">
+                    Calculate the Central Sterile Supply Department (CSSD) requirements based on the number of hospital beds.
+                </p>
+                
+                <form id="cssdForm" class="mt-4">
+                    <div class="mb-3">
+                        <label for="bed_count" class="form-label">Number of Hospital Beds</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-bed"></i>
+                            </span>
+                            <input type="number" class="form-control form-control-lg" 
+                                  id="bed_count" name="bed_count" min="1" 
+                                  inputmode="numeric" pattern="[0-9]*"
+                                  required autocomplete="off">
+                        </div>
+                        <div class="form-text">Enter the total number of beds in your hospital facility</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-calculator me-2"></i>
+                            Calculate Requirements
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Results Card (Initially Hidden) -->
+        <div id="resultsCard" class="card d-none shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0 fs-5 fs-md-4 fs-lg-3">
+                    <i class="fas fa-clipboard-check me-2"></i>
+                    CSSD Requirements
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="info-box mb-4 touch-card">
+                            <h4 class="fs-5">
+                                <i class="fas fa-ruler-combined me-2"></i>
+                                CSSD Area
+                            </h4>
+                            <div class="d-flex align-items-baseline">
+                                <span id="cssdArea" class="display-6 me-2">--</span>
+                                <span class="fs-5">sq ft</span>
+                            </div>
+                            <p class="text-muted mt-2">Based on hospital size: <span id="bedRange">--</span> beds</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-box touch-card">
+                            <h4 class="fs-5">
+                                <i class="fas fa-box me-2"></i>
+                                Autoclave Requirements
+                            </h4>
+                            <div class="d-flex align-items-center">
+                                <span id="autoclaveQuantity" class="display-6 me-2">--</span>
+                                <span class="fs-5">units</span>
+                            </div>
+                            <p class="mt-2">Model: <span id="autoclaveModel" class="badge bg-info">--</span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Equipment Table -->
+                <div class="mt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="fs-5 mb-0">
+                            <i class="fas fa-tools me-2"></i>
+                            Required Instruments
+                        </h4>
+                        <span class="badge bg-primary px-3 py-2 touch-badge" id="itemCount">0 items</span>
+                    </div>
+                    
+                    <div class="table-responsive mobile-table-container">
+                        <table class="table table-striped table-hover mobile-friendly-table">
+                            <thead class="table-dark sticky-header">
+                                <tr>
+                                    <th scope="col" class="thin-col">#</th>
+                                    <th scope="col">Equipment</th>
+                                    <th scope="col" class="d-none d-md-table-cell">Specification</th>
+                                    <th scope="col" class="text-center">Qty</th>
+                                    <th scope="col" class="d-none d-sm-table-cell">Unit Cost</th>
+                                    <th scope="col">Total Cost</th>
+                                </tr>
+                            </thead>
+                            <tbody id="equipmentTableBody">
+                                <!-- Equipment rows will be added here dynamically -->
+                                <tr class="no-equipment-row">
+                                    <td colspan="6" class="text-center py-3">No equipment data available</td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="table-dark">
+                                <tr>
+                                    <td colspan="5" class="text-end fw-bold">Calculated Total:</td>
+                                    <td class="fw-bold" id="totalBudget">₹0</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="5" class="text-end fw-bold">Official Budget:</td>
+                                    <td class="fw-bold" id="officialBudget">Not available</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <!-- Tap to see specifications hint for mobile -->
+                    <div class="d-block d-md-none text-center text-muted small mt-2">
+                        <i class="fas fa-info-circle me-1"></i> Tap on equipment row to see specifications
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Error Alert (Initially Hidden) -->
+        <div id="errorAlert" class="alert alert-danger d-none mt-3" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <span id="errorMessage">An error occurred.</span>
+        </div>
+        
+        <!-- Information Section - Collapsible on Mobile -->
+        <div class="accordion mt-4 shadow-sm" id="infoAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" 
+                            data-bs-target="#infoContent" aria-expanded="true" aria-controls="infoContent">
+                        <i class="fas fa-info-circle me-2"></i>
+                        About CSSD Planning
+                    </button>
+                </h2>
+                <div id="infoContent" class="accordion-collapse collapse show" data-bs-parent="#infoAccordion">
+                    <div class="accordion-body">
+                        <p>The Central Sterile Supply Department (CSSD) is critical to hospital operations, responsible for cleaning, sterilizing, and distributing medical supplies and equipment. Proper planning of CSSD space and equipment is essential for:</p>
+                        
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <div class="list-group touch-list">
+                                    <div class="list-group-item">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        Infection control and prevention
+                                    </div>
+                                    <div class="list-group-item">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        Operational efficiency
+                                    </div>
+                                    <div class="list-group-item">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        Regulatory compliance
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="list-group touch-list">
+                                    <div class="list-group-item">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        Cost management
+                                    </div>
+                                    <div class="list-group-item">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        Future expansion planning
+                                    </div>
+                                    <div class="list-group-item">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        Workflow optimization
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
